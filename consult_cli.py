@@ -325,8 +325,20 @@ def load_agents_config(root: Path) -> dict[str, Any]:
     config_path = root / "agents.json"
     if not config_path.exists():
         return {}
-    with config_path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with config_path.open("r", encoding="utf-8") as f:
+            config = json.load(f)
+    except json.JSONDecodeError as exc:
+        raise ConsultError(
+            f"Invalid agents.json at {config_path}: {exc.msg}"
+        ) from exc
+
+    if not isinstance(config, dict):
+        raise ConsultError(f"Invalid agents.json at {config_path}: top-level JSON must be an object.")
+    agents = config.get("agents", {})
+    if agents is not None and not isinstance(agents, dict):
+        raise ConsultError(f'Invalid agents.json at {config_path}: "agents" must be an object.')
+    return config
 
 
 def resolve_agent_command(root: Path, agent_name: str) -> list[str] | None:
@@ -522,18 +534,30 @@ def cmd_create(args: argparse.Namespace) -> int:
         "handoff_event_id": handoff_event["event_id"],
     }
 
+    text = f"Created {args.kind} item {item_id} for {target}."
+    if dispatch_result.dispatched:
+        text += f" Dispatched session to {target}."
+
     if should_wait and dispatch_result.dispatched:
         final_state, final_events = load_state(root, item_id)
         output["final_state"] = state_to_dict(final_state)
         output["dispatch_exit_code"] = dispatch_result.exit_code
+        if dispatch_result.exit_code not in (None, 0):
+            output["ok"] = False
+            output["error"] = (
+                f"Dispatched agent {target} exited with code {dispatch_result.exit_code}."
+            )
+            text = (
+                f"Dispatch to {target} failed with exit code {dispatch_result.exit_code}."
+                + (f" See {dispatch_result.log_path}." if dispatch_result.log_path else "")
+            )
 
     emit_output(
         args,
         output,
-        f"Created {args.kind} item {item_id} for {target}."
-        + (f" Dispatched session to {target}." if dispatch_result.dispatched else ""),
+        text,
     )
-    return 0
+    return 0 if output["ok"] else 1
 
 
 def cmd_claim(args: argparse.Namespace) -> int:
@@ -563,7 +587,11 @@ def cmd_note(args: argparse.Namespace) -> int:
     root = root_path(args)
     agent = require_nonblank(args.agent, "agent")
     body = require_nonblank(args.body, "body")
-    require_open_item(root, args.item_id)
+    state, _events = require_open_item(root, args.item_id)
+    if state.current_owner and state.current_owner != agent:
+        raise ConsultError(
+            f'Item "{args.item_id}" is currently owned by {state.current_owner}; only the current owner may add notes.'
+        )
     event = append_event(root, args.item_id, "note_added", agent, {"body": body})
     emit_output(
         args,
@@ -624,18 +652,30 @@ def cmd_handoff(args: argparse.Namespace) -> int:
         "action": "handoff",
     }
 
+    text = f"Handed off {args.item_id} from {from_agent} to {to_agent}."
+    if dispatch_result.dispatched:
+        text += f" Dispatched session to {to_agent}."
+
     if should_wait and dispatch_result.dispatched:
         final_state, _final_events = load_state(root, args.item_id)
         output["final_state"] = state_to_dict(final_state)
         output["dispatch_exit_code"] = dispatch_result.exit_code
+        if dispatch_result.exit_code not in (None, 0):
+            output["ok"] = False
+            output["error"] = (
+                f"Dispatched agent {to_agent} exited with code {dispatch_result.exit_code}."
+            )
+            text = (
+                f"Dispatch to {to_agent} failed with exit code {dispatch_result.exit_code}."
+                + (f" See {dispatch_result.log_path}." if dispatch_result.log_path else "")
+            )
 
     emit_output(
         args,
         output,
-        f"Handed off {args.item_id} from {from_agent} to {to_agent}."
-        + (f" Dispatched session to {to_agent}." if dispatch_result.dispatched else ""),
+        text,
     )
-    return 0
+    return 0 if output["ok"] else 1
 
 
 def cmd_inbox(args: argparse.Namespace) -> int:

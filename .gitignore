@@ -3,3 +3,7 @@ __pycache__/
 .consult-cli/
 .DS_Store
 docs/superpowers/
+
+# Private blog / draft docs for later publication
+docs/diagrams.md
+docs/why-consult-cli.md

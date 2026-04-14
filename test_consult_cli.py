@@ -209,6 +209,7 @@ class ConsultCliTests(unittest.TestCase):
         self.assertEqual(code, 0, stderr)
         payload = json.loads(stdout)
         self.assertFalse(payload["dispatched"])
+        self.assertEqual(payload["item_id"], payload["item_id"])
 
     def test_dispatch_with_agents_config(self) -> None:
         # Write an agents.json that points to a harmless command
@@ -267,6 +268,30 @@ class ConsultCliTests(unittest.TestCase):
         # final_state should be present since --wait was used
         self.assertIn("final_state", payload)
         self.assertEqual(payload["final_state"]["item_id"], payload["item_id"])
+
+    def test_wait_flag_returns_failure_for_nonzero_dispatch_exit(self) -> None:
+        config_path = self.root / "agents.json"
+        config_path.write_text(json.dumps({
+            "agents": {
+                "fail-agent": {"command": ["/usr/bin/false"]},
+            }
+        }))
+        code, stdout, stderr = self.run_cli(
+            "--json",
+            "create",
+            "--wait",
+            "--kind", "consult",
+            "--from", "claude",
+            "--to", "fail-agent",
+            "--title", "Fail wait test",
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(stderr, "")
+        payload = json.loads(stdout)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["dispatch_exit_code"], 1)
+        self.assertIn("final_state", payload)
+        self.assertIn("exited with code 1", payload["error"])
 
     def test_resolve_agent_command_from_config(self) -> None:
         config_path = self.root / "agents.json"
@@ -340,6 +365,16 @@ class ConsultCliTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("already closed", stderr)
 
+    def test_non_owner_cannot_add_note(self) -> None:
+        item_id = self.create_item()
+        code, _stdout, stderr = self.run_cli(
+            "note", item_id, "--agent", "mallory", "--body", "unauthorized"
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("only the current owner may add notes", stderr)
+        state, _events = consult_cli.load_state(self.root, item_id)
+        self.assertEqual(state.note_count, 0)
+
     def test_handoff_to_self_is_allowed(self) -> None:
         item_id = self.create_item()
         code, _stdout, stderr = self.run_cli(
@@ -359,6 +394,18 @@ class ConsultCliTests(unittest.TestCase):
         payload = json.loads(stdout)
         self.assertEqual(payload["agent"], "nobody")
         self.assertEqual(payload["items"], [])
+
+    def test_invalid_agents_json_is_user_facing_error(self) -> None:
+        (self.root / "agents.json").write_text("{bad json\n")
+        code, _stdout, stderr = self.run_cli(
+            "create",
+            "--kind", "consult",
+            "--from", "claude",
+            "--to", "codex",
+            "--title", "Bad config",
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("Invalid agents.json", stderr)
 
 
 if __name__ == "__main__":
