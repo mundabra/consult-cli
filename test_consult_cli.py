@@ -318,5 +318,48 @@ class ConsultCliTests(unittest.TestCase):
         self.assertIn(str(consult_cli.CONSULT_CLI_PATH.parent), cmd)
 
 
+    def test_close_already_closed_item_fails(self) -> None:
+        item_id = self.create_item()
+        self.run_cli("claim", item_id, "--agent", "claude")
+        self.run_cli("close", item_id, "--agent", "claude", "--summary", "Done.")
+
+        code, _stdout, stderr = self.run_cli(
+            "close", item_id, "--agent", "claude", "--summary", "Again"
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("already closed", stderr)
+
+    def test_note_on_closed_item_fails(self) -> None:
+        item_id = self.create_item()
+        self.run_cli("claim", item_id, "--agent", "claude")
+        self.run_cli("close", item_id, "--agent", "claude", "--summary", "Done.")
+
+        code, _stdout, stderr = self.run_cli(
+            "note", item_id, "--agent", "claude", "--body", "Late note"
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("already closed", stderr)
+
+    def test_handoff_to_self_is_allowed(self) -> None:
+        item_id = self.create_item()
+        code, _stdout, stderr = self.run_cli(
+            "handoff", item_id,
+            "--no-dispatch",
+            "--from", "claude",
+            "--to", "claude",
+            "--summary", "Self-assignment",
+        )
+        self.assertEqual(code, 0, stderr)
+        state, _events = consult_cli.load_state(self.root, item_id)
+        self.assertEqual(state.current_owner, "claude")
+
+    def test_empty_inbox_json_returns_valid_structure(self) -> None:
+        code, stdout, stderr = self.run_cli("--json", "inbox", "--agent", "nobody")
+        self.assertEqual(code, 0, stderr)
+        payload = json.loads(stdout)
+        self.assertEqual(payload["agent"], "nobody")
+        self.assertEqual(payload["items"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

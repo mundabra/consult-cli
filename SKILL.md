@@ -5,8 +5,8 @@ description: Use this skill when work needs explicit local baton-passing, consul
 
 # consult-cli
 
-<!-- Adjust this path to your consult-cli clone location -->
-Use the local CLI at `./consult`.
+<!-- Replace the path below with the absolute path to your consult-cli clone -->
+Use the local CLI at `/path/to/consult-cli/consult`.
 
 This tool is for `single-owner, append-only` coordination. It is not a generic chat channel.
 

@@ -765,7 +765,7 @@ def build_parser() -> argparse.ArgumentParser:
     create_parser.add_argument("--wait", action="store_true", help="Block until the dispatched agent finishes and return the final item state.")
     create_parser.set_defaults(func=cmd_create)
 
-    claim_parser = subparsers.add_parser("claim", help="Claim an item you currently own.")
+    claim_parser = subparsers.add_parser("claim", help="Claim an item assigned to you.")
     claim_parser.add_argument("item_id")
     claim_parser.add_argument("--agent", required=True)
     claim_parser.set_defaults(func=cmd_claim)
