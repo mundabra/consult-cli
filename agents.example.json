@@ -1,0 +1,16 @@
+{
+  "agents": {
+    "gemini": {
+      "command": ["gemini", "--prompt"]
+    },
+    "aider": {
+      "command": ["aider", "--message"]
+    },
+    "goose": {
+      "command": ["goose", "run", "--prompt"]
+    },
+    "reviewer": {
+      "command": ["claude", "-p", "--append-system-prompt", "You are a senior code reviewer. Focus on correctness, edge cases, and security."]
+    }
+  }
+}
