@@ -25,6 +25,24 @@ structured response back. consult-cli is that handoff layer.
 - **`--wait`** — block until the dispatched agent finishes, zero polling
 - **`--json` everywhere** — machine-readable for scripts and wrappers
 
+## How It Flows
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant CLI as consult-cli
+    participant X as Target Agent
+
+    Dev->>CLI: create --wait --to codex
+    CLI->>CLI: append item_created
+    CLI->>CLI: append handoff
+    CLI->>X: dispatch headless session
+    X->>CLI: claim
+    X->>CLI: note findings
+    X->>CLI: handoff or close
+    CLI-->>Dev: return final state
+```
+
 ## Quickstart
 
 ```bash
