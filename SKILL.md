@@ -25,7 +25,7 @@ This tool is for `single-owner, append-only` coordination. It is not a generic c
 - Use `close` only when the current owner is done.
 - Do not edit `events.jsonl` manually. The log is append-only.
 - Prefer `--json` when another tool or wrapper will parse the result.
-- **Dispatch is automatic.** `create` and `handoff` spawn a new agent session for the target. Use `--no-dispatch` only when handing back (to avoid loops) or when the target agent is already running.
+- **Dispatch is automatic.** `create` and `handoff` spawn a new agent session for the target (`claude -p`, `codex exec`, or `kiro-cli chat --no-interactive`). Use `--no-dispatch` only when handing back (to avoid loops) or when the target agent is already running.
 - When handing off back to the requester, always use `--no-dispatch`.
 
 ## Waiting for dispatch to complete

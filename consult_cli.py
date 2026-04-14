@@ -313,6 +313,10 @@ def built_in_agent_command(agent_name: str) -> list[str] | None:
             return [codex_binary, "exec"]
         if DEFAULT_CODEX_PATH.exists():
             return [str(DEFAULT_CODEX_PATH), "exec"]
+    if normalized == "kiro":
+        kiro_binary = shutil.which("kiro-cli")
+        if kiro_binary:
+            return [kiro_binary, "chat", "--no-interactive", "--trust-all-tools"]
     return None
 
 
@@ -375,6 +379,9 @@ def build_dispatch_command(root: Path, agent_name: str, working_dir: Path) -> li
             "--add-dir",
             consult_root,
         ]
+
+    if normalized == "kiro":
+        return built_in
 
     return built_in
 

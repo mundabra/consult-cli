@@ -54,6 +54,7 @@ Built-in agents are auto-detected:
 |-------|---------|-----------|
 | `claude` | `claude -p` | `which claude` |
 | `codex` | `codex exec` | `which codex` or `/Applications/Codex.app` |
+| `kiro` | `kiro-cli chat --no-interactive --trust-all-tools` | `which kiro-cli` |
 
 Use `--wait` to block until the dispatched agent finishes and return the final state:
 
@@ -106,6 +107,11 @@ consult-cli, including `--wait` for dispatch.
 Works out of the box. `consult` dispatches to `codex exec` with
 `--sandbox workspace-write` and grants access to the consult CLI directory and
 storage root.
+
+### Kiro
+
+Works out of the box. `consult` dispatches to `kiro-cli chat --no-interactive
+--trust-all-tools` when `kiro-cli` is on PATH.
 
 ### Other Assistants
 

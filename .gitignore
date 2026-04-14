@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 .consult-cli/
 .DS_Store
-docs/
+docs/superpowers/
