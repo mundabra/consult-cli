@@ -1,8 +1,16 @@
-# consult-cli
+# consult-cli (beta)
 
 Local append-only baton board for coordinating work between AI coding
 assistants. When you `create` or `handoff` an item, the CLI dispatches a new
 agent session to pick it up.
+
+## Status
+
+`consult-cli` is in beta.
+
+- The core baton flow is working and tested locally.
+- The CLI surface may still evolve as real multi-agent workflows shake out.
+- Dispatch behavior depends on the target local agent CLI behaving well in headless mode.
 
 ## Why
 
