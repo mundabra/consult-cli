@@ -2,7 +2,8 @@
 
 Local append-only baton board for coordinating work between AI coding
 assistants. When you `create` or `handoff` an item, the CLI dispatches a new
-agent session to pick it up.
+agent session to pick it up. Works out of the box with Claude Code, Codex, and
+Kiro.
 
 ## Status
 
@@ -14,7 +15,7 @@ agent session to pick it up.
 
 ## Why
 
-AI coding assistants (Claude Code, Codex, Cursor, etc.) run in isolated
+AI coding assistants (Claude Code, Codex, Kiro, Cursor, etc.) run in isolated
 sessions. When one agent needs a second opinion — a review, a consult, a
 question — there's no standard way to hand work over with context and get a
 structured response back. consult-cli is that handoff layer.
@@ -52,8 +53,11 @@ cd consult-cli
 # Run the example (no dispatch — simulates both agents locally)
 ./examples/two-agent-review.sh
 
-# Or dispatch to a real agent (requires claude or codex installed)
+# Or dispatch to a real agent (requires claude, codex, or kiro installed)
 ./consult create --wait --kind consult --from me --to codex \
+  --title "Ping" --body "Reply with a note saying hello, then close."
+
+./consult create --wait --kind consult --from me --to kiro \
   --title "Ping" --body "Reply with a note saying hello, then close."
 ```
 
